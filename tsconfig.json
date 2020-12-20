@@ -4,7 +4,7 @@
     "module": "es2015",
     "declaration": true,
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": "./src",
     "removeComments": true,
     "noImplicitAny": true,
     "strictNullChecks": false,
@@ -15,5 +15,6 @@
     "noImplicitReturns": true,
     "moduleResolution": "node",
     "esModuleInterop": true
-  }
+  },
+  "exclude": ["**/*.spec.ts", "./dist/*"]
 }

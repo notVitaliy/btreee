@@ -3,7 +3,12 @@ import typescript from 'rollup-plugin-typescript2'
 import commonjs from 'rollup-plugin-commonjs'
 
 const opts = {
-  'fluent-behavior-tree': ['BehaviorTreeBuilder', 'BehaviorTreeStatus', 'StateData', 'BehaviorTreeNodeInterface'],
+  'fluent-behavior-tree': [
+    'BehaviorTreeBuilder',
+    'BehaviorTreeStatus',
+    'StateData',
+    'BehaviorTreeNodeInterface',
+  ],
 }
 
 export default {
@@ -19,5 +24,5 @@ export default {
     }),
     resolve(),
   ],
-  treeshake: false,
+  treeshake: true,
 }

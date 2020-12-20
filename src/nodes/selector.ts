@@ -7,5 +7,5 @@ export const selectorNode: SelectorNode = (nodes) => () => {
     if (status !== STATUS.FAILURE) return status
   }
 
-  return STATUS.SUCCESS
+  return STATUS.FAILURE
 }
