@@ -1,12 +1,16 @@
 {
   "name": "btreee",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs.js",
+  "module": "./dist/index.js",
   "scripts": {
     "clean": "rimraf ./dist",
     "build": "yarn clean && rollup -c ./config/rollup/rollup.config.js",
     "watch": "yarn build --watch",
+    "build:es": "rollup -c ./config/rollup/rollup.config.js --file ./dist/index.js --format es",
+    "build:cjs": "rollup -c ./config/rollup/rollup.config.js --file ./dist/index.cjs.js --format cjs",
+    "build:all": "yarn clean && yarn build:es && yarn build:cjs",
     "test": "jest --config=./config/jest/jest.config.js"
   },
   "author": "notVitaliy",
@@ -17,8 +21,6 @@
     "jest": "^26.6.3",
     "rimraf": "^3.0.2",
     "rollup": "^2.35.1",
-    "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-typescript2": "^0.29.0",
     "ts-jest": "^26.4.4",
     "ts-node": "^9.1.1",
