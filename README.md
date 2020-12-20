@@ -1,9 +1,11 @@
-# Behavior Tree
+# Btreee
+
+> The extra `e` is for... `error`
 
 ## Install
 
 ```
-yarn add behavior-tree
+yarn add btreee
 ```
 
 ## How to use
@@ -14,7 +16,7 @@ Each "branch" of the tree must terminate with a leaf node that returns a `STATUS
 
 `Tree`
 
-- The main constructor/entry point for `behavior-tree`
+- The main constructor/entry point for `btreee`
 - Takes in a funciton that returns a single node.
 
 `sequenceNode`
@@ -51,13 +53,7 @@ Each "branch" of the tree must terminate with a leaf node that returns a `STATUS
 ## Basic Example
 
 ```typescript
-import {
-  Tree,
-  sequenceNode,
-  selectorNode,
-  leafNode,
-  STATUS,
-} from 'behavior-tree'
+import { Tree, sequenceNode, selectorNode, leafNode, STATUS } from 'btreee'
 
 const tree = new Tree()
 
@@ -126,13 +122,7 @@ Our goal is to have this npc seek out and kill the player. The game world is ver
 Here's what our basic tree would look like. Start reading from the bottom up to get a better understanding. Below is flowchart.
 
 ```typescript
-import {
-  Tree,
-  sequenceNode,
-  selectorNode,
-  leafNode,
-  STATUS,
-} from 'behavior-tree'
+import { Tree, sequenceNode, selectorNode, leafNode, STATUS } from 'btreee'
 
 const evilNpc: EvilNPC = new EvilNPC()
 
@@ -250,4 +240,4 @@ const tick = () =>
   })
 ```
 
-![flowchart](https://raw.githubusercontent.com/notVitaliy/behavior-tree/master/assets/flowchart.svg)
+![flowchart](https://raw.githubusercontent.com/notVitaliy/btreee/master/assets/flowchart.svg)
