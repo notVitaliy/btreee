@@ -1,0 +1,46 @@
+{
+  "manifest": {
+    "name": "btreee",
+    "version": "1.0.5",
+    "description": "> The extra `e` is for... `error`",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "scripts": {
+      "clean": "rimraf ./dist",
+      "build": "yarn clean && rollup -c ./config/rollup/rollup.config.js",
+      "watch": "yarn build --watch",
+      "build:es": "rollup -c ./config/rollup/rollup.config.js --file ./dist/index.js --format es",
+      "build:cjs": "rollup -c ./config/rollup/rollup.config.js --file ./dist/index.cjs.js --format cjs",
+      "build:all": "yarn clean && yarn build:es && yarn build:cjs",
+      "test": "jest --config=./config/jest/jest.config.js"
+    },
+    "author": {
+      "name": "notVitaliy"
+    },
+    "license": "ISC",
+    "devDependencies": {
+      "@types/jest": "^26.0.19",
+      "@types/node": "^14.14.14",
+      "jest": "^26.6.3",
+      "rimraf": "^3.0.2",
+      "rollup": "^2.35.1",
+      "rollup-plugin-typescript2": "^0.29.0",
+      "ts-jest": "^26.4.4",
+      "ts-node": "^9.1.1",
+      "typescript": "^4.1.3"
+    },
+    "_registry": "npm",
+    "_loc": "/home/notvitaliy/.cache/yarn/v6/npm-btreee-1.0.5-f837ae06-62c0-45d4-a96d-9a2715b7a50a-1614881669983/node_modules/btreee/package.json",
+    "readmeFilename": "README.md",
+    "readme": "# Btreee\n\n> The extra `e` is for... `error`\n\n## Install\n\n```\nyarn add btreee\n```\n\n## How to use\n\nStart off by creating the root of your tree with a node. The root node must be one of `leafNode`, `sequenceNode`, `selectorNode`, `inverterNode`, or `parallelNode`.\n\nEach \"branch\" of the tree must terminate with a leaf node that returns a `STATUS`.\n\n`Tree`\n\n- The main constructor/entry point for `btreee`\n- Takes in a funciton that returns a single node.\n\n`sequenceNode`\n\n- Takes in a function that returns an array of nodes.\n- Will keep running nodes until an explicit `STATUS.FAILURE`.\n- Will return `STATUS.SUCCESS` is all nodes succeeded.\n- Will return `STATUS.FAILURE` if any node failed.\n\n`selectorNode`\n\n- Takes in a function that returns an array of nodes.\n- Will keep running nodes until an explicit `STATUS.SUCCESS`.\n- Will return `STATUS.SUCCESS` is any node succeeded.\n- Will return `STATUS.FAILURE` if all nodes failed.\n\n`leafNode`\n\n- Takes in a function that returns a `STATUS`.\n\n`inverterNode`\n\n- Takes in a node and inverts that nodes `STATUS`.\n\n`parallelNode`\n\n- Takes in a function that returns an array of nodes.\n- Param 2 is the minimum amount of successes required to return `STATUS.SUCCESS`\n- Param 3 is the minimum amount of failures required to return `STATUS.FAILURE`\n- This will run _all_ of the nodes given to it and evaluate once those are done\n\n---\n\n## Basic Example\n\n```typescript\nimport { Tree, sequenceNode, selectorNode, leafNode, STATUS } from 'btreee'\n\nconst tree = new Tree()\n\n// Set the root of the tree\ntree.setRoot(\n  // Run everything in array until fail\n  () =>\n    sequenceNode(() => [\n      // If not hungry, fail and stop sequence\n      leafNode(() => (amIHungry() ? STATUS.SUCCESS : STATUS.FAILURE)),\n\n      // Run everything in array until fail\n      sequenceNode(() => [\n        // Run until a success\n        selectorNode(() => [\n          leafNode(() =>\n            isThereSomethingIReallyWant() ? STATUS.SUCCESS : STATUS.FAILURE,\n          ),\n          leafNode(() => (isThereAnyFood() ? STATUS.SUCCESS : STATUS.FAILURE)),\n          leafNode(() => (areThereDrinks() ? STATUS.SUCCESS : STATUS.FAILURE)),\n        ]),\n\n        // Only executes is previous node returned a success\n        leafNode(() => eatOrDrink() && STATUS.SUCCESS),\n      ]),\n    ]),\n)\n\n// Executes the tree\ntree.tick()\n```\n\n---\n\n## Complex Example\n\nLet's assume we have an `EvilNPC` we want to give some behivors to. Here is the interface:\n\n```typescript\ntype Direction = 'forward' | 'backward'\n\ninterface EvilNPC {\n  // Senses\n  getHealth: () => number // 0-100\n  feel: (\n    direction: Direction,\n  ) => {\n    isEmpty: () => boolean\n    isWall: () => boolean\n    isUnit: () => boolean\n    getUnit: () => {\n      isEnemy: () => boolean\n    }\n  }\n\n  // Actions\n  walk: (direction: Direction) => void\n  attack: (direction: Direction) => void\n  pivot: () => void\n  heal: () => void\n}\n```\n\nOur goal is to have this npc seek out and kill the player. The game world is very rudimentary, there's only forward and backward.\n\nHere's what our basic tree would look like. Start reading from the bottom up to get a better understanding. Below is flowchart.\n\n```typescript\nimport { Tree, sequenceNode, selectorNode, leafNode, STATUS } from 'btreee'\n\nconst evilNpc: EvilNPC = new EvilNPC()\n\n// NPC State\nconst state: {\n  health: number\n  direction: Direction\n} = {\n  health: 100,\n  direction: 'forward',\n}\n\n// Simple Helper Functions\nconst isSomethingThere = (direction: Direction) =>\n  evilNpc.feel(direction).isEmpty() ? STATUS.FAILURE : STATUS.SUCCESS\n\nconst isSomethingInFrontOfMe = () => leafNode(() => isSomethingThere('forward'))\nconst isSomethingBehindMe = () => leafNode(() => isSomethingThere('backward'))\n\nconst isWallInFrontOfMe = () =>\n  sequenceNode(() => [\n    isSomethingInFrontOfMe(),\n    leafNode(() =>\n      evilNpc.feel('forward').isWall() ? STATUS.SUCCESS : STATUS.FAILURE,\n    ),\n  ])\n\nconst isUnitInFrontOfMe = () =>\n  sequenceNode(() => [\n    isSomethingInFrontOfMe(),\n    leafNode(() =>\n      evilNpc.feel('forward').isUnit() ? STATUS.SUCCESS : STATUS.FAILURE,\n    ),\n  ])\n\nconst isEnemyInFrontOfMe = () =>\n  sequenceNode(() => [\n    isUnitInFrontOfMe(),\n    leafNode(() =>\n      evilNpc.feel('forward').getUnit().isEnemy()\n        ? STATUS.SUCCESS\n        : STATUS.FAILURE,\n    ),\n  ])\n\nconst isWallBehindMe = () =>\n  sequenceNode(() => [\n    isSomethingBehindMe(),\n    leafNode(() =>\n      evilNpc.feel('backward').isWall() ? STATUS.SUCCESS : STATUS.FAILURE,\n    ),\n  ])\n\nconst isUnitBehindMe = () =>\n  sequenceNode(() => [\n    isSomethingBehindMe(),\n    leafNode(() =>\n      evilNpc.feel('backward').isUnit() ? STATUS.SUCCESS : STATUS.FAILURE,\n    ),\n  ])\n\nconst isEnemyBehindMe = () =>\n  sequenceNode(() => [\n    isUnitBehindMe(),\n    leafNode(() =>\n      evilNpc.feel('backward').getUnit().isEnemy()\n        ? STATUS.SUCCESS\n        : STATUS.FAILURE,\n    ),\n  ])\n\nconst shouldIHeal = () =>\n  leafNode(() => (state.health <= 25 ? STATUS.SUCCESS : STATUS.FAILURE))\n\n// Leaf Nodes / Actions\nconst walk = (direction: Direction) =>\n  leafNode(() => (evilNpc.walk(direction), STATUS.SUCCESS))\nconst attack = (direction: Direction) =>\n  leafNode(() => (evilNpc.attack(direction), STATUS.SUCCESS))\nconst pivot = () => {\n  state.direction = state.direction === 'forward' ? 'backward' : 'forward'\n  return leafNode(() => (evilNpc.pivot(), STATUS.SUCCESS))\n}\nconst heal = () => leafNode(() => (evilNpc.heal(), STATUS.SUCCESS))\n\n// Sequences\nconst hunter = () =>\n  selectorNode(() => [\n    selectorNode(() => [isEnemyBehindMe(), attack('backward')]),\n    selectorNode(() => [isEnemyInFrontOfMe(), attack('forward')]),\n  ])\n\nconst pivoter = () =>\n  selectorNode(() => [\n    sequenceNode(() => [isWallInFrontOfMe(), pivot()]),\n    sequenceNode(() => [isWallBehindMe(), pivot()]),\n  ])\n\nconst walker = () => sequenceNode(() => [pivoter(), walk(state.direction)])\nconst healer = () => sequenceNode(() => [shouldIHeal(), heal()])\n\nconst actions = () => selectorNode(() => [hunter(), walker(), healer()])\nconst preActions = () =>\n  leafNode(() => ((state.health = evilNpc.getHealth()), STATUS.SUCCESS))\n\nconst root = () => sequenceNode(() => [preActions(), actions()])\n\nconst tree = new Tree()\ntree.setRoot(root)\n\nconst tick = () =>\n  process.nextTick(() => {\n    tree.tick()\n    tick()\n  })\n```\n\n![flowchart](https://raw.githubusercontent.com/notVitaliy/btreee/master/assets/flowchart.svg)\n"
+  },
+  "artifacts": [],
+  "remote": {
+    "type": "copy",
+    "registry": "npm",
+    "hash": "f837ae06-62c0-45d4-a96d-9a2715b7a50a-1614881669983",
+    "reference": "/home/notvitaliy/projects/spacetraders-bot/vendor/btreee"
+  },
+  "registry": "npm",
+  "hash": "f837ae06-62c0-45d4-a96d-9a2715b7a50a-1614881669983"
+}

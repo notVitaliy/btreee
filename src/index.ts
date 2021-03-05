@@ -1,12 +1,16 @@
 import { STATUS } from './status'
 export { STATUS }
 
-export type Action = () => STATUS
+export type Action = () => Promise<STATUS>
 
 export type InverterNode = (node: Action) => Action
 export type SequenceNode = (nodes: () => Action[]) => Action
 export type SelectorNode = (nodes: () => Action[]) => Action
-export type ParallelNode = (nodes: () => Action[], successReq: number, failureReq: number) => Action
+export type ParallelNode = (
+  nodes: () => Action[],
+  successReq: number,
+  failureReq: number,
+) => Action
 
 export type LeafNode = (action: Action) => Action
 

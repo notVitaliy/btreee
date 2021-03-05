@@ -7,7 +7,5 @@ export class Tree {
     this.root = root()
   }
 
-  tick = () => {
-    this.root()
-  }
+  tick = () => this.root()
 }

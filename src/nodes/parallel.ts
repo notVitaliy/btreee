@@ -5,8 +5,8 @@ export const parallelNode: ParallelNode = (
   nodes,
   successReq,
   failureReq,
-) => () => {
-  const statuses = nodes().map((leaf) => leaf())
+) => async () => {
+  const statuses = await Promise.all(nodes().map((leaf) => leaf()))
 
   const successes = statuses.filter((status) => status === STATUS.SUCCESS)
   if (successes.length === successReq) return STATUS.SUCCESS
